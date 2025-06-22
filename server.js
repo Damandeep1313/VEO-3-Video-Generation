@@ -16,7 +16,10 @@ app.use(express.json({ limit: "10mb" }));
 app.post("/generate-video", async (req, res) => {
   console.log("➡️  Received /generate-video request");
 
-  let replicateToken = req.headers["authorization"];
+let replicateToken = process.env.REPLICATE_API_TOKEN;
+if (!replicateToken.startsWith("Bearer ")) {
+  replicateToken = `Bearer ${replicateToken}`;
+}
   const prompt = req.body?.prompt;
 
   if (!replicateToken || !prompt) {
