@@ -16,15 +16,12 @@ app.use(express.json({ limit: "10mb" }));
 app.post("/generate-video", async (req, res) => {
   console.log("➡️  Received /generate-video request");
 
-let replicateToken = req.headers["authorization"] || req.headers["Authorization"];
-if (!replicateToken.startsWith("Bearer ")) {
-  replicateToken = `Bearer ${replicateToken}`;
-}
+  let replicateToken = req.headers["token"];
   const prompt = req.body?.prompt;
 
   if (!replicateToken || !prompt) {
-    console.warn("⛔ Missing Authorization or prompt.");
-    return res.status(400).json({ error: "Missing Authorization or prompt" });
+    console.warn("⛔ Missing token or prompt.");
+    return res.status(400).json({ error: "Missing token or prompt" });
   }
 
   if (!replicateToken.startsWith("Bearer ")) {
@@ -91,12 +88,11 @@ if (!replicateToken.startsWith("Bearer ")) {
         (err, result) => (err ? reject(err) : resolve(result))
       );
 
-    const { Readable } = require("stream");
-    const bufferStream = new Readable();
-    bufferStream.push(videoBuffer);
-    bufferStream.push(null); // end of stream
-    bufferStream.pipe(uploadStream);
-
+      const { Readable } = require("stream");
+      const bufferStream = new Readable();
+      bufferStream.push(videoBuffer);
+      bufferStream.push(null);
+      bufferStream.pipe(uploadStream);
     });
 
     console.log("✅ Cloudinary upload complete:", uploadResult.secure_url);
