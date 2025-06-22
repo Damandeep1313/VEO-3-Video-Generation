@@ -1,35 +1,21 @@
-# === Stage 1: Build & ffmpeg layer ===
-FROM node:20-bullseye AS builder
+# Use official Node.js LTS image
+FROM node:20-alpine
 
+# Set working directory
 WORKDIR /app
 
-# Install ffmpeg
-RUN apt-get update && \
-    apt-get install -y ffmpeg && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Copy and install dependencies
+# Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm install --production
 
-# Copy app source
+# Copy source code and static files
 COPY . .
 
-# === Stage 2: Slim final image ===
-FROM node:20-slim
+# Ensure videos directory exists and is writable
+RUN mkdir -p /app/videos && chmod -R 777 /app/videos
 
-WORKDIR /app
-
-# Copy node_modules and code from builder
-COPY --from=builder /app /app
-
-# ffmpeg binaries from builder
-COPY --from=builder /usr/bin/ffmpeg /usr/bin/ffmpeg
-COPY --from=builder /usr/lib /usr/lib
-COPY --from=builder /lib /lib
-
-# Expose port
+# Expose the port your server runs on (change if different)
 EXPOSE 3000
 
-# Run the app
+# Start the application
 CMD ["node", "server.js"]
