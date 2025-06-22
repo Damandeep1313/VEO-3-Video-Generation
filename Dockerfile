@@ -1,26 +1,35 @@
-# Use full Debian-based Node.js image
-FROM node:20-bullseye
+# === Stage 1: Build & ffmpeg layer ===
+FROM node:20-bullseye AS builder
 
-# Install ffmpeg and clean up
+WORKDIR /app
+
+# Install ffmpeg
 RUN apt-get update && \
     apt-get install -y ffmpeg && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /app
-
-# Copy only necessary files first
-COPY package.json ./
-COPY package-lock.json ./
-
-# Install dependencies
+# Copy and install dependencies
+COPY package*.json ./
 RUN npm install
 
-# Copy all remaining source files
+# Copy app source
 COPY . .
 
-# Expose your app port
+# === Stage 2: Slim final image ===
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy node_modules and code from builder
+COPY --from=builder /app /app
+
+# ffmpeg binaries from builder
+COPY --from=builder /usr/bin/ffmpeg /usr/bin/ffmpeg
+COPY --from=builder /usr/lib /usr/lib
+COPY --from=builder /lib /lib
+
+# Expose port
 EXPOSE 3000
 
-# Start the server
-CMD ["node", "index.js"]
+# Run the app
+CMD ["node", "server.js"]
