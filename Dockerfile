@@ -1,26 +1,26 @@
-# Use official Node.js LTS image
-FROM node:20-slim
+# Use full Debian-based Node.js image
+FROM node:20-bullseye
 
-# Install ffmpeg for video processing (optional but recommended)
+# Install ffmpeg and clean up
 RUN apt-get update && \
     apt-get install -y ffmpeg && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy only necessary files first
+COPY package.json ./
+COPY package-lock.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy the rest of the app
+# Copy all remaining source files
 COPY . .
 
-# Expose port (same as your Express server)
+# Expose your app port
 EXPOSE 3000
 
 # Start the server
-CMD ["node", "server.js"]
+CMD ["node", "index.js"]
